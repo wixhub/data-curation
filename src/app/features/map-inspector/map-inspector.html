@@ -1,0 +1,25 @@
+<div class="map-container">
+  <div class="map-header">
+    <h3>Spatial Inspector</h3>
+    <span class="point-count">{{ data().length }} points</span>
+  </div>
+  <div class="canvas-wrapper">
+    <svg viewBox="0 0 500 500" class="map-canvas">
+      <line x1="0" y1="250" x2="500" y2="250" stroke="#334155" stroke-dasharray="4" />
+      <line x1="250" y1="0" x2="250" y2="500" stroke="#334155" stroke-dasharray="4" />
+
+      @for (point of data(); track point.id) {
+        <circle
+          [attr.cx]="projectX(point.longitude)"
+          [attr.cy]="projectY(point.latitude)"
+          [attr.r]="point.id === selectedId() ? 8 : 5"
+          [attr.fill]="point.isFlagged ? 'var(--accent-danger)' : 'var(--accent-primary)'"
+          class="map-point"
+          (click)="select.emit(point.id)"
+        >
+          <title>{{ point.individualId }} - {{ point.timestamp }}</title>
+        </circle>
+      }
+    </svg>
+  </div>
+</div>
