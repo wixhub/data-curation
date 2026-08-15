@@ -1,0 +1,77 @@
+<header class="dashboard-header">
+  <div class="brand">
+    <h1>FaunaQC Studio</h1>
+    <span class="subtitle">Zoneless Animal Tracking Curation Engine</span>
+  </div>
+  <div class="actions">
+    <button class="btn-secondary" (click)="stateService.exportData('csv')">Export CSV</button>
+    <button class="btn-primary" (click)="stateService.exportData('json')">Export JSON</button>
+  </div>
+</header>
+
+<section class="toolbar">
+  <div class="filter-group">
+    <label>Individual:</label>
+    <select
+      [ngModel]="stateService.filters().selectedIndividual"
+      (ngModelChange)="onIndividualChange($event)"
+    >
+      @for (id of stateService.availableIndividuals(); track id) {
+        <option [value]="id">{{ id }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <label>Speed Limit (km/h):</label>
+    <input
+      type="number"
+      [ngModel]="stateService.filters().maxSpeedThreshold"
+      (ngModelChange)="onSpeedLimitChange($event)"
+    />
+  </div>
+
+  <div class="filter-group checkbox">
+    <label>
+      <input
+        type="checkbox"
+        [ngModel]="stateService.filters().showOnlyFlagged"
+        (ngModelChange)="onFlaggedToggle($event)"
+      />
+      Show Flagged Only
+    </label>
+  </div>
+
+  <div class="view-toggles">
+    <button [class.active]="viewMode() === 'split'" (click)="viewMode.set('split')">Split</button>
+    <button [class.active]="viewMode() === 'table-only'" (click)="viewMode.set('table-only')">
+      Table
+    </button>
+    <button [class.active]="viewMode() === 'map-only'" (click)="viewMode.set('map-only')">
+      Map
+    </button>
+  </div>
+</section>
+
+<main class="dashboard-content [viewMode()]">
+  @if (viewMode() === 'split' || viewMode() === 'table-only') {
+    <div class="pane">
+      <app-data-grid
+        [data]="stateService.filteredData()"
+        [selectedId]="stateService.selectedPointId()"
+        (select)="stateService.selectPoint($event)"
+        (toggleOverride)="stateService.toggleOverride($event)"
+      />
+    </div>
+  }
+
+  @if (viewMode() === 'split' || viewMode() === 'map-only') {
+    <div class="pane">
+      <app-map-inspector
+        [data]="stateService.filteredData()"
+        [selectedId]="stateService.selectedPointId()"
+        (select)="stateService.selectPoint($event)"
+      />
+    </div>
+  }
+</main>
