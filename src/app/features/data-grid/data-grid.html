@@ -1,0 +1,45 @@
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Individual</th>
+        <th>Timestamp</th>
+        <th>Coordinates</th>
+        <th>Speed</th>
+        <th>Accuracy</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (point of data(); track point.id) {
+        <tr [class.selected]="point.id === selectedId()" (click)="select.emit(point.id)">
+          <td>
+            @if (point.isFlagged) {
+              <span class="badge flagged" [title]="point.flagReason">Flagged</span>
+            } @else {
+              <span class="badge normal">Valid</span>
+            }
+          </td>
+          <td>{{ point.individualId }}</td>
+          <td>{{ point.timestamp | date: 'short' }}</td>
+          <td>{{ point.latitude | number: '1.3-3' }}, {{ point.longitude | number: '1.3-3' }}</td>
+          <td>{{ point.speedKmH ?? 0 }} km/h</td>
+          <td>{{ point.accuracyMeters }}m</td>
+          <td>
+            <button
+              class="btn-secondary"
+              (click)="$event.stopPropagation(); toggleOverride.emit(point.id)"
+            >
+              {{ point.isFlagged ? 'Approve' : 'Flag' }}
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="7" class="empty-state">No telemetry records match current filters.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
