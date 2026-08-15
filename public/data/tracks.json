@@ -1,0 +1,48 @@
+[
+  {
+    "id": "trk_001",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T08:00:00Z",
+    "latitude": 47.654,
+    "longitude": 9.478,
+    "accuracyMeters": 5,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_002",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:00:00Z",
+    "latitude": 47.854,
+    "longitude": 9.978,
+    "accuracyMeters": 12,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_003",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:05:00Z",
+    "latitude": 51.0,
+    "longitude": 12.0,
+    "accuracyMeters": 150,
+    "isFlagged": true,
+    "flagReason": "Excessive speed: 340.2 km/h"
+  },
+  {
+    "id": "trk_004",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T08:30:00Z",
+    "latitude": 47.6,
+    "longitude": 9.4,
+    "accuracyMeters": 8,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_005",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T09:30:00Z",
+    "latitude": 47.61,
+    "longitude": 9.41,
+    "accuracyMeters": 10,
+    "isFlagged": false
+  }
+]
