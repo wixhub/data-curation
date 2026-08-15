@@ -1,0 +1,80 @@
+:root {
+  --bg-primary: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-surface-hover: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-primary: #38bdf8;
+  --accent-danger: #f43f5e;
+  --accent-success: #10b981;
+  --border-color: #334155;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --fluid-px: clamp(1rem, 2vw, 2rem);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+// Responsive layout mixins
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.flagged {
+    background-color: rgba(244, 63, 94, 0.2);
+    color: var(--accent-danger);
+    border: 1px solid var(--accent-danger);
+  }
+
+  &.normal {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: var(--accent-success);
+  }
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+
+  &.btn-primary {
+    background-color: var(--accent-primary);
+    color: #0f172a;
+    &:hover {
+      background-color: #0ea5e9;
+    }
+  }
+
+  &.btn-secondary {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-main);
+    &:hover {
+      background-color: #475569;
+    }
+  }
+}
