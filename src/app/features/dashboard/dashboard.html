@@ -13,8 +13,8 @@
   <div class="filter-group">
     <label>Individual:</label>
     <select
-      [ngModel]="stateService.filters().selectedIndividual"
-      (ngModelChange)="onIndividualChange($event)"
+      [value]="stateService.filters().selectedIndividual"
+      (change)="onIndividualChange($event)"
     >
       @for (id of stateService.availableIndividuals(); track id) {
         <option [value]="id">{{ id }}</option>
@@ -26,8 +26,8 @@
     <label>Speed Limit (km/h):</label>
     <input
       type="number"
-      [ngModel]="stateService.filters().maxSpeedThreshold"
-      (ngModelChange)="onSpeedLimitChange($event)"
+      [value]="stateService.filters().maxSpeedThreshold"
+      (input)="onSpeedLimitChange($event)"
     />
   </div>
 
@@ -35,8 +35,8 @@
     <label>
       <input
         type="checkbox"
-        [ngModel]="stateService.filters().showOnlyFlagged"
-        (ngModelChange)="onFlaggedToggle($event)"
+        [checked]="stateService.filters().showOnlyFlagged"
+        (change)="onFlaggedToggle($event)"
       />
       Show Flagged Only
     </label>
