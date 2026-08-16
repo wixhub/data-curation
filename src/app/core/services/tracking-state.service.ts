@@ -1,15 +1,13 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Service, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { TrackingPoint, FilterCriteria } from '../models/tracking.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TrackingStateService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  readonly rawData = signal<TrackingPoint[]>([]);
-  readonly isLoading = signal<boolean>(false);
-  readonly selectedPointId = signal<string | null>(null);
-
+  // Filter criteria signal holding the current state of filters
   readonly filters = signal<FilterCriteria>({
     startDate: null,
     endDate: null,
@@ -18,24 +16,25 @@ export class TrackingStateService {
     maxSpeedThreshold: 50,
   });
 
-  constructor() {
-    this.loadInitialData();
-  }
+  // Selected tracking point identifier signal
+  readonly selectedPointId = signal<string | null>(null);
 
-  loadInitialData(): void {
-    this.isLoading.set(true);
-    this.http.get<TrackingPoint[]>('data/tracks.json').subscribe({
-      next: (data) => {
-        const processed = this.runQCEngine(data, this.filters().maxSpeedThreshold);
-        this.rawData.set(processed);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-      },
-    });
-  }
+  // Modern stable rxResource handling asynchronous data fetching using the `stream` property
+  private readonly tracksResource = rxResource({
+    stream: () => this.http.get<TrackingPoint[]>('data/tracks.json'),
+  });
 
+  // Expose loading state derived from rxResource status
+  readonly isLoading = computed(() => this.tracksResource.isLoading());
+
+  // Raw data processed with Quality Control (QC) engine whenever raw fetch updates or speed threshold changes
+  readonly rawData = computed(() => {
+    const value = this.tracksResource.value();
+    if (!value) return [];
+    return this.runQCEngine(value, this.filters().maxSpeedThreshold);
+  });
+
+  // Filtered dataset computed efficiently based on current filter criteria
   readonly filteredData = computed(() => {
     const points = this.rawData();
     const criteria = this.filters();
@@ -51,17 +50,32 @@ export class TrackingStateService {
     });
   });
 
+  // Unique list of available individuals derived from raw data
   readonly availableIndividuals = computed(() => {
     const ids = this.rawData().map((p) => p.individualId);
     return ['ALL', ...new Set(ids)];
   });
 
+  // Manual override state tracking for specific points
+  private readonly manualOverrides = signal<
+    Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>
+  >(new Map());
+
+  // Quality Control engine to calculate speeds, distances, and flag anomalies
   private runQCEngine(points: TrackingPoint[], speedLimit: number): TrackingPoint[] {
     const sorted = [...points].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
+    const overrides = this.manualOverrides();
+
     return sorted.map((point, index, arr) => {
+      // Apply existing manual overrides if present
+      const override = overrides.get(point.id);
+      if (override) {
+        return { ...point, ...override };
+      }
+
       if (index === 0) return { ...point, isFlagged: false };
 
       const prev = arr[index - 1];
@@ -97,6 +111,7 @@ export class TrackingStateService {
     });
   }
 
+  // Haversine formula for calculating distance between two coordinates
   private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -107,33 +122,42 @@ export class TrackingStateService {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  // Update current filter settings
   updateFilters(newFilters: Partial<FilterCriteria>): void {
-    this.filters.update((curr) => {
-      const updated = { ...curr, ...newFilters };
-      if (newFilters.maxSpeedThreshold !== undefined) {
-        this.rawData.set(this.runQCEngine(this.rawData(), updated.maxSpeedThreshold));
+    this.filters.update((curr) => ({ ...curr, ...newFilters }));
+  }
+
+  // Toggle flag status and mark point as manually overridden
+  toggleOverride(pointId: string): void {
+    this.manualOverrides.update((map) => {
+      const newMap = new Map(map);
+      const rawPoints = this.tracksResource.value() ?? [];
+      const targetPoint = rawPoints.find((p) => p.id === pointId);
+
+      if (targetPoint) {
+        const currentOverride = newMap.get(pointId);
+        const currentFlagged = currentOverride ? currentOverride.isFlagged : targetPoint.isFlagged;
+
+        newMap.set(pointId, {
+          isFlagged: !currentFlagged,
+          manuallyOverridden: true,
+        });
       }
-      return updated;
+      return newMap;
     });
   }
 
-  toggleOverride(pointId: string): void {
-    this.rawData.update((points) =>
-      points.map((p) =>
-        p.id === pointId ? { ...p, isFlagged: !p.isFlagged, manuallyOverridden: true } : p,
-      ),
-    );
-  }
-
+  // Set selected tracking point ID
   selectPoint(id: string | null): void {
     this.selectedPointId.set(id);
   }
 
+  // Export filtered tracking data into CSV or JSON formats
   exportData(format: 'csv' | 'json'): void {
     const data = this.filteredData();
     let content = format === 'json' ? JSON.stringify(data, null, 2) : '';
-    let filename = `curated_tracks_${Date.now()}.${format}`;
-    let mimeType = format === 'json' ? 'application/json' : 'text/csv';
+    const filename = `curated_tracks_${Date.now()}.${format}`;
+    const mimeType = format === 'json' ? 'application/json' : 'text/csv';
 
     if (format === 'csv') {
       const headers = [
