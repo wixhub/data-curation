@@ -1,13 +1,32 @@
 <header class="dashboard-header">
   <div class="brand">
     <h1>FaunaQC Studio</h1>
-    <span class="subtitle">Zoneless Animal Tracking Curation Engine</span>
+    <span class="subtitle">Animal Tracking Curation Engine</span>
   </div>
   <div class="actions">
+    <!-- File upload trigger -->
+    <input
+      type="file"
+      #fileInput
+      style="display: none"
+      accept=".csv,.json"
+      (change)="onFileSelected($event)"
+    />
+    <button class="btn-secondary" (click)="fileInput.click()">Upload Raw Data</button>
     <button class="btn-secondary" (click)="stateService.exportData('csv')">Export CSV</button>
     <button class="btn-primary" (click)="stateService.exportData('json')">Export JSON</button>
   </div>
 </header>
+
+<!-- User guidance instructions panel -->
+<section class="instructions-panel">
+  <p>
+    <strong>Quick Start Guide:</strong> Upload a raw telemetry dataset using
+    <strong>Upload Raw Data</strong> or inspect the preloaded mock records. Adjust the
+    <strong>Speed Limit</strong> to automatically flag physical anomalies, review points in the
+    table or spatial inspector and export your cleaned dataset for repository publication.
+  </p>
+</section>
 
 <section class="toolbar">
   <div class="filter-group">
@@ -61,6 +80,7 @@
         [selectedId]="stateService.selectedPointId()"
         (select)="stateService.selectPoint($event)"
         (toggleOverride)="stateService.toggleOverride($event)"
+        (deletePoint)="stateService.deletePoint($event)"
       />
     </div>
   }
@@ -75,3 +95,4 @@
     </div>
   }
 </main>
+<app-footer />
