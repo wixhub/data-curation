@@ -3,18 +3,18 @@
     "id": "trk_001",
     "individualId": "Wolf_Alpha",
     "timestamp": "2026-06-01T08:00:00Z",
-    "latitude": 47.654,
-    "longitude": 9.478,
+    "latitude": 47.668,
+    "longitude": 9.175,
     "accuracyMeters": 5,
     "isFlagged": false
   },
   {
     "id": "trk_002",
     "individualId": "Wolf_Alpha",
-    "timestamp": "2026-06-01T09:00:00Z",
-    "latitude": 47.854,
-    "longitude": 9.978,
-    "accuracyMeters": 12,
+    "timestamp": "2026-06-01T08:15:00Z",
+    "latitude": 47.675,
+    "longitude": 9.195,
+    "accuracyMeters": 6,
     "isFlagged": false
   },
   {
@@ -29,20 +29,156 @@
   },
   {
     "id": "trk_004",
-    "individualId": "Bear_Beta",
-    "timestamp": "2026-06-01T08:30:00Z",
-    "latitude": 47.6,
-    "longitude": 9.4,
-    "accuracyMeters": 8,
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T08:45:00Z",
+    "latitude": 47.69,
+    "longitude": 9.235,
+    "accuracyMeters": 5,
     "isFlagged": false
   },
   {
     "id": "trk_005",
-    "individualId": "Bear_Beta",
-    "timestamp": "2026-06-01T09:30:00Z",
-    "latitude": 47.61,
-    "longitude": 9.41,
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:00:00Z",
+    "latitude": 47.702,
+    "longitude": 9.26,
     "accuracyMeters": 10,
     "isFlagged": false
+  },
+  {
+    "id": "trk_006",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:15:00Z",
+    "latitude": 47.715,
+    "longitude": 9.285,
+    "accuracyMeters": 7,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_007",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:30:00Z",
+    "latitude": 47.728,
+    "longitude": 9.31,
+    "accuracyMeters": 9,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_008",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T09:45:00Z",
+    "latitude": 47.74,
+    "longitude": 9.34,
+    "accuracyMeters": 6,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_009",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T10:00:00Z",
+    "latitude": 47.755,
+    "longitude": 9.37,
+    "accuracyMeters": 8,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_010",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T10:15:00Z",
+    "latitude": 47.77,
+    "longitude": 9.4,
+    "accuracyMeters": 11,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_011",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T08:00:00Z",
+    "latitude": 47.665,
+    "longitude": 9.18,
+    "accuracyMeters": 5,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_012",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T08:20:00Z",
+    "latitude": 47.673,
+    "longitude": 9.2,
+    "accuracyMeters": 7,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_013",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T08:40:00Z",
+    "latitude": 47.685,
+    "longitude": 9.225,
+    "accuracyMeters": 6,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_014",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T09:00:00Z",
+    "latitude": 47.698,
+    "longitude": 9.25,
+    "accuracyMeters": 8,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_015",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T09:20:00Z",
+    "latitude": 47.71,
+    "longitude": 9.275,
+    "accuracyMeters": 10,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_016",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T09:40:00Z",
+    "latitude": 47.725,
+    "longitude": 9.3,
+    "accuracyMeters": 6,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_017",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T10:00:00Z",
+    "latitude": 47.738,
+    "longitude": 9.33,
+    "accuracyMeters": 9,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_018",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T10:20:00Z",
+    "latitude": 47.75,
+    "longitude": 9.36,
+    "accuracyMeters": 7,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_019",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T10:40:00Z",
+    "latitude": 47.765,
+    "longitude": 9.39,
+    "accuracyMeters": 8,
+    "isFlagged": false
+  },
+  {
+    "id": "trk_020",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T11:00:00Z",
+    "latitude": 48.775,
+    "longitude": 9.182,
+    "accuracyMeters": 180,
+    "isFlagged": true,
+    "flagReason": "Excessive spatial jump / Out of range"
   }
 ]

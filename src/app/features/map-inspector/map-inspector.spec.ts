@@ -1,69 +1,71 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MapInspector } from './map-inspector';
+import { LeafletMapService } from '../../core/services/map.service';
 import { TrackingPoint } from '../../core/models/tracking.model';
 
 describe('MapInspector', () => {
-  let component: MapInspector;
   let fixture: ComponentFixture<MapInspector>;
+  let component: MapInspector;
+  let mapServiceMock: {
+    initializeMap: ReturnType<typeof vi.fn>;
+    renderTelemetryPoints: ReturnType<typeof vi.fn>;
+  };
 
-  const mockPoints: TrackingPoint[] = [
-    {
-      id: '1',
-      individualId: 'ind-1',
-      timestamp: '2026-06-01T10:00:00Z',
-      latitude: 47.6,
-      longitude: 9.4,
-      accuracyMeters: 10,
-      isFlagged: false,
-    },
+  const mockTrackingPoints: TrackingPoint[] = [
+    { latitude: 48.0, longitude: 9.0, timestamp: '2026-03-30T10:00:00Z' } as TrackingPoint,
+    { latitude: 48.1, longitude: 9.1, timestamp: '2026-03-30T10:05:00Z' } as TrackingPoint,
   ];
 
   beforeEach(async () => {
+    mapServiceMock = {
+      initializeMap: vi.fn(),
+      renderTelemetryPoints: vi.fn(),
+    };
+
     await TestBed.configureTestingModule({
       imports: [MapInspector],
-    }).compileComponents();
+    })
+      .overrideComponent(MapInspector, {
+        set: {
+          providers: [{ provide: LeafletMapService, useValue: mapServiceMock }],
+        },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(MapInspector);
     component = fixture.componentInstance;
+
+    // Provide required input data
+    fixture.componentRef.setInput('data', mockTrackingPoints);
   });
 
   it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should project longitude to X coordinate correctly', () => {
-    // Lon 0 should project to middle (250 on a 500 scale)
-    expect(component.projectX(0)).toBe(250);
-    // Lon -180 should project to 0
-    expect(component.projectX(-180)).toBe(0);
+  it('should initialize the map and render points on afterNextRender', () => {
+    fixture.detectChanges(); // Triggers lifecycle and afterNextRender
+
+    expect(mapServiceMock.initializeMap).toHaveBeenCalledTimes(1);
+    const containerIdArg = mapServiceMock.initializeMap.mock.calls[0][0];
+    const coordsArg = mapServiceMock.initializeMap.mock.calls[0][1];
+
+    expect(containerIdArg).toMatch(/^map-frame-[a-z0-9]+$/);
+    expect(coordsArg).toEqual([48.0, 9.0]);
+    expect(mapServiceMock.renderTelemetryPoints).toHaveBeenCalledWith(mockTrackingPoints);
   });
 
-  it('should project latitude to Y coordinate correctly', () => {
-    // Lat 90 (North Pole) should project to 0
-    expect(component.projectY(90)).toBe(0);
-    // Lat -90 (South Pole) should project to 500
-    expect(component.projectY(-90)).toBe(500);
-    // Lat 0 (Equator) should project to 250
-    expect(component.projectY(0)).toBe(250);
-  });
+  it('should re-render telemetry points when data changes via effect', async () => {
+    fixture.detectChanges(); // Initial render
 
-  it('should bind required input properly', () => {
-    fixture.componentRef.setInput('data', mockPoints);
-    fixture.componentRef.setInput('selectedId', '1');
-    fixture.detectChanges();
+    const newPoints: TrackingPoint[] = [
+      { latitude: 50.0, longitude: 8.0, timestamp: '2026-03-30T11:00:00Z' } as TrackingPoint,
+    ];
 
-    expect(component.data()).toEqual(mockPoints);
-    expect(component.selectedId()).toBe('1');
-  });
+    // Update required input
+    fixture.componentRef.setInput('data', newPoints);
+    await fixture.whenStable();
 
-  it('should emit select event when triggered', () => {
-    let emittedId: string | null = null;
-    component.select.subscribe((id) => {
-      emittedId = id;
-    });
-
-    // Simulate emission
-    component.select.emit('1');
-    expect(emittedId).toBe('1');
+    expect(mapServiceMock.renderTelemetryPoints).toHaveBeenCalledWith(newPoints);
   });
 });

@@ -1,0 +1,50 @@
+.app-main-footer {
+  font-size: 0.875rem;
+
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  .footer-subtext {
+    font-size: 0.8125rem;
+  }
+
+  .author-credit {
+    font-size: 0.8125rem;
+
+    @media (min-width: 768px) {
+      text-align: right;
+    }
+  }
+
+  a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+  }
+}

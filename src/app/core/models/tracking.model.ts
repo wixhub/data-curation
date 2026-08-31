@@ -1,3 +1,5 @@
+export type ViewMode = 'split' | 'table-only' | 'map-only';
+
 export interface TrackingPoint {
   id: string;
   individualId: string;
@@ -18,5 +20,3 @@ export interface FilterCriteria {
   showOnlyFlagged: boolean;
   maxSpeedThreshold: number; // km/h
 }
-
-export type ViewMode = 'split' | 'table-only' | 'map-only';

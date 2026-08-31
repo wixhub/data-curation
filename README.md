@@ -1,6 +1,6 @@
 # Movebank Data Curation & Quality Control Tool
 
-An interactive, fully responsive web utility built with **Angular 22** designed to help researchers inspect, clean, and validate raw animal tracking data prior to analysis or repository publication.
+An interactive, fully responsive web utility built with **Angular 22** designed to help researchers inspect, clean and validate raw animal tracking data prior to analysis or repository publication.
 
 ## Features
 
@@ -8,7 +8,7 @@ An interactive, fully responsive web utility built with **Angular 22** designed 
 
 - **Automated Outlier Detection:** Client-side algorithms flag suspicious telemetry points (e.g., impossible speed jumps).
 
-- **Interactive Review & Export:** Visually inspect anomalies, toggle data inclusion status, and export cleaned datasets locally as CSV or JSON.
+- **Interactive Review & Export:** Visually inspect anomalies, toggle data inclusion status and export cleaned datasets locally as CSV or JSON.
 
 ## Tech Stack
 
@@ -25,6 +25,28 @@ git clone https://github.com/wixhub/data-curation.git
 
 cd data-curation
 ```
+
+## ⚙️ Configuration & Environment
+
+To run this application locally, you need to provide configuration keys for map tiles [CARTO](https://carto.com/basemaps/apikey/).
+
+1. Copy the example environment configuration file located in `src/environments/`:
+
+```bash
+cp src/environments/environment.example.ts src/environments/environment.ts
+```
+
+2. Open src/environments/environment.ts and insert your personal CARTO API key:
+
+```typescript
+export const environment = {
+  production: true,
+  cartoApiKey: 'YOUR_CARTO_API_KEY',
+};
+```
+
+> [!NOTE]
+> `environment.ts` is ignored by Git to keep API keys secure, while `environment.example.ts` serves as the public template.
 
 ## Development server
 
@@ -81,3 +103,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## ⚖️ License & Attribution
+
+- **Software License**: This project is open-source software licensed under the **[MIT License](./LICENSE)**.
+
+- **Map Attribution**:
+
+  - Map tiles by **CARTO**, under CC BY 3.0. Data by **OpenStreetMap** contributors.

@@ -1,7 +1,8 @@
 .table-container {
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
+  height: 380px; /* Fixed height for vertical constraint */
+  max-height: 380px; /* Prevents table from expanding beyond limit */
+  overflow-y: auto; /* Enables internal vertical scrolling */
   background: var(--bg-surface);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -33,6 +34,34 @@ tr {
   &.selected {
     background: rgba(56, 189, 248, 0.15);
     border-left: 4px solid var(--accent-primary);
+  }
+}
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  button {
+    flex: 1;
+    min-width: 75px;
+    text-align: center;
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+}
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  &:hover {
+    background: rgba(239, 68, 68, 0.3);
   }
 }
 .empty-state {

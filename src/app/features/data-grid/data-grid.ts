@@ -18,4 +18,6 @@ export class DataGrid {
   // Modern output declarations using the output() function
   readonly select = output<string>();
   readonly toggleOverride = output<string>();
+
+  readonly deletePoint = output<string>();
 }

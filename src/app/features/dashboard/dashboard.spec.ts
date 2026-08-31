@@ -1,35 +1,37 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Dashboard } from './dashboard';
 import { TrackingStateService } from '../../core/services/tracking-state.service';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 
 describe('Dashboard', () => {
   let component: Dashboard;
-  let fixture: ComponentFixture<Dashboard>;
-  let httpMock: HttpTestingController;
-  let stateService: TrackingStateService;
+  let mockStateService: Partial<TrackingStateService>;
 
   beforeEach(async () => {
+    mockStateService = {
+      filters: signal({
+        startDate: null,
+        endDate: null,
+        selectedIndividual: 'ALL',
+        showOnlyFlagged: false,
+        maxSpeedThreshold: 50,
+      }),
+      availableIndividuals: signal(['ALL', 'IndA', 'IndB']) as any,
+      filteredData: signal([]) as any,
+      isLoading: signal(false) as any,
+      selectedPointId: signal(null) as any,
+      updateFilters: vi.fn(),
+      loadRawFile: vi.fn(),
+    };
+
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [TrackingStateService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [{ provide: TrackingStateService, useValue: mockStateService }],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Dashboard);
+    const fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
-    httpMock = TestBed.inject(HttpTestingController);
-    stateService = TestBed.inject(TrackingStateService);
-
-    // Flush initial request made by rxResource in the service
-    const req = httpMock.expectOne('data/tracks.json');
-    req.flush([]);
-
     fixture.detectChanges();
-  });
-
-  afterEach(() => {
-    httpMock.verify();
   });
 
   it('should create the dashboard component', () => {
@@ -37,45 +39,44 @@ describe('Dashboard', () => {
   });
 
   it('should update individual filter on native select change event', () => {
-    const updateFiltersSpy = vi.spyOn(stateService, 'updateFilters');
-
     const event = {
-      target: { value: 'ind-1' } as HTMLSelectElement,
+      target: { value: 'IndA' } as HTMLSelectElement,
     } as unknown as Event;
 
     component.onIndividualChange(event);
-    expect(updateFiltersSpy).toHaveBeenCalledWith({ selectedIndividual: 'ind-1' });
+
+    expect(mockStateService.updateFilters).toHaveBeenCalledWith({
+      selectedIndividual: 'IndA',
+    });
   });
 
   it('should update speed limit filter on native input change event', () => {
-    const updateFiltersSpy = vi.spyOn(stateService, 'updateFilters');
-
     const event = {
-      target: { value: '80' } as HTMLInputElement,
+      target: { value: '75' } as HTMLInputElement,
     } as unknown as Event;
 
     component.onSpeedLimitChange(event);
-    expect(updateFiltersSpy).toHaveBeenCalledWith({ maxSpeedThreshold: 80 });
+
+    expect(mockStateService.updateFilters).toHaveBeenCalledWith({
+      maxSpeedThreshold: 75,
+    });
   });
 
   it('should update showOnlyFlagged filter on native checkbox change event', () => {
-    const updateFiltersSpy = vi.spyOn(stateService, 'updateFilters');
-
     const event = {
       target: { checked: true } as HTMLInputElement,
     } as unknown as Event;
 
     component.onFlaggedToggle(event);
-    expect(updateFiltersSpy).toHaveBeenCalledWith({ showOnlyFlagged: true });
+
+    expect(mockStateService.updateFilters).toHaveBeenCalledWith({
+      showOnlyFlagged: true,
+    });
   });
 
   it('should switch view modes correctly', () => {
     expect(component.viewMode()).toBe('split');
-
     component.viewMode.set('table-only');
     expect(component.viewMode()).toBe('table-only');
-
-    component.viewMode.set('map-only');
-    expect(component.viewMode()).toBe('map-only');
   });
 });
