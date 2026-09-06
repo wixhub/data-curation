@@ -11,15 +11,11 @@ export class LeafletMapService {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
-    // Automatically clean up Leaflet map instance on service destruction
     this.destroyRef.onDestroy(() => {
       this.disposeMap();
     });
   }
 
-  /**
-   * Initializes the Leaflet map inside the specified DOM container element
-   */
   public initializeMap(
     containerId: string,
     initialCenter: [number, number] = [20, 0],
@@ -44,33 +40,41 @@ export class LeafletMapService {
     this.markerLayerGroup.addTo(this.mapInstance);
     this.vectorLayerGroup.addTo(this.mapInstance);
 
-    // Force Leaflet to recalculate container dimensions after DOM settlement
     setTimeout(() => {
       this.mapInstance?.invalidateSize();
     }, 150);
   }
 
-  /**
-   * Renders tracking points as markers, connects them with vector polylines,
-   * and automatically fits map bounds to the active data points.
-   */
   public renderTelemetryPoints(records: readonly TrackingPoint[]): void {
     if (!this.mapInstance) return;
 
     this.markerLayerGroup.clearLayers();
     this.vectorLayerGroup.clearLayers();
 
-    const latLngs: L.LatLngExpression[] = [];
+    const allLatLngs: L.LatLngExpression[] = [];
+    const individualTracks = new Map<string, { latLngs: [number, number][]; color: string }>();
 
     records.forEach((record) => {
       const latLng: [number, number] = [record.latitude, record.longitude];
-      latLngs.push(latLng);
+      allLatLngs.push(latLng);
 
-      const color = record.isFlagged ? '#ef4444' : '#3b82f6';
+      // Assign or retrieve a consistent color per individual
+      if (!individualTracks.has(record.individualId)) {
+        individualTracks.set(record.individualId, {
+          latLngs: [],
+          color: this.getIndividualColor(record.individualId),
+        });
+      }
+
+      const trackData = individualTracks.get(record.individualId)!;
+      trackData.latLngs.push(latLng);
+
+      // Status overrides color if flagged, otherwise uses individual color
+      const markerColor = record.isFlagged ? '#ef4444' : trackData.color;
 
       const marker = L.circleMarker(latLng, {
         radius: 6,
-        fillColor: color,
+        fillColor: markerColor,
         color: '#ffffff',
         weight: 1.5,
         opacity: 0.9,
@@ -89,44 +93,37 @@ export class LeafletMapService {
       this.markerLayerGroup.addLayer(marker);
     });
 
-    if (latLngs.length > 0) {
-      const bounds = L.latLngBounds(latLngs);
+    // Render individual polylines using their designated color
+    individualTracks.forEach(({ latLngs, color }) => {
+      if (latLngs.length > 1) {
+        const polyline = L.polyline(latLngs, {
+          color: color,
+          weight: 2.5,
+          dashArray: '4, 8',
+          opacity: 0.8,
+        });
+        this.vectorLayerGroup.addLayer(polyline);
+      }
+    });
+
+    if (allLatLngs.length > 0) {
+      const bounds = L.latLngBounds(allLatLngs);
       this.mapInstance.fitBounds(bounds, {
         padding: [60, 60],
         maxZoom: 14,
       });
     }
-
-    if (latLngs.length > 1) {
-      const polyline = L.polyline(latLngs, {
-        color: '#3b82f6',
-        weight: 2,
-        dashArray: '4, 8',
-        opacity: 0.6,
-      });
-      this.vectorLayerGroup.addLayer(polyline);
-    }
   }
 
-  /**
-   * Maps species type union to a specific marker color code
-   */
-  private getSpeciesColor(species: string): string {
-    switch (species) {
-      case 'AVIAN_MIGRATORY':
-        return '#10b981';
-      case 'MARINE_CETACEAN':
-        return '#06b6d4';
-      case 'TERRESTRIAL_UNGULATE':
-        return '#f59e0b';
-      default:
-        return '#6366f1';
+  private getIndividualColor(id: string): string {
+    const palette = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
+    return palette[Math.abs(hash) % palette.length];
   }
 
-  /**
-   * Destroys and cleans up the Leaflet map instance safely
-   */
   public disposeMap(): void {
     if (this.mapInstance) {
       this.mapInstance.remove();
