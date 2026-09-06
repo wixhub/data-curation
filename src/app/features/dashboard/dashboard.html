@@ -12,21 +12,40 @@
       accept=".csv,.json"
       (change)="onFileSelected($event)"
     />
-    <button class="btn-secondary" (click)="fileInput.click()">Upload Raw Data</button>
+    <button class="btn-primary" (click)="fileInput.click()">Upload Raw Data</button>
     <button class="btn-secondary" (click)="stateService.exportData('csv')">Export CSV</button>
-    <button class="btn-primary" (click)="stateService.exportData('json')">Export JSON</button>
+    <button class="btn-secondary" (click)="stateService.exportData('json')">Export JSON</button>
   </div>
 </header>
 
 <!-- User guidance instructions panel -->
 <section class="instructions-panel">
   <p>
-    <strong>Quick Start Guide:</strong> Upload a raw telemetry dataset using
-    <strong>Upload Raw Data</strong> or inspect the preloaded mock records. Adjust the
-    <strong>Speed Limit</strong> to automatically flag physical anomalies, review points in the
-    table or spatial inspector and export your cleaned dataset for repository publication.
+    <strong>User Guide:</strong><br />
+    <span
+      >1. Upload a raw telemetry dataset using <strong>Upload Raw Data</strong> or inspect the
+      preloaded mock records.</span
+    ><br />
+    <span
+      >2. Adjust the <strong>Speed Limit</strong> to automatically flag physical anomalies, review
+      points in the table or spatial inspector.</span
+    ><br />
+    <span>3. You can export your cleaned dataset for repository publication.</span>
   </p>
 </section>
+
+<!-- Session restoration notification banner -->
+@if (stateService.sessionRestored()) {
+  <div class="restoration-banner">
+    <span>Unfinished curation session restored from local storage</span>
+    <div class="banner-actions">
+      <button class="btn-primary btn-sm" (click)="stateService.dismissRestoration()">OK</button>
+      <button class="btn-text" (click)="stateService.clearCurrentSession()">
+        Discard & Start Fresh
+      </button>
+    </div>
+  </div>
+}
 
 <section class="toolbar">
   <div class="filter-group">
