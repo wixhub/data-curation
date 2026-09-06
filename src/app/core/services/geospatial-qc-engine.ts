@@ -12,43 +12,52 @@ export class GeospatialQcEngine {
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
-    return sorted.map((point, index, arr) => {
-      const override = overrides.get(point.id);
-      if (override) {
-        return { ...point, ...override };
+    // Track the last seen point independently for each individual
+    const lastPointMap = new Map<string, TrackingPoint>();
+
+    return sorted.map((point) => {
+      const prev = lastPointMap.get(point.individualId);
+      lastPointMap.set(point.individualId, point);
+
+      let speed = 0;
+      if (prev) {
+        const distanceKm = this.haversine(
+          prev.latitude,
+          prev.longitude,
+          point.latitude,
+          point.longitude,
+        );
+        const timeHours =
+          (new Date(point.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 3600000;
+        speed = timeHours > 0 ? distanceKm / timeHours : 0;
       }
 
-      if (index === 0) return { ...point, isFlagged: false, manuallyOverridden: false };
-
-      const prev = arr[index - 1];
-      if (prev.individualId !== point.individualId) {
-        return { ...point, isFlagged: false, manuallyOverridden: false };
-      }
-
-      const distanceKm = this.haversine(
-        prev.latitude,
-        prev.longitude,
-        point.latitude,
-        point.longitude,
-      );
-      const timeHours =
-        (new Date(point.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 3600000;
-      const speed = timeHours > 0 ? distanceKm / timeHours : 0;
-
+      const speedKmH = Number(speed.toFixed(1));
       let isFlagged = false;
       let reason = '';
 
       if (speed > speedLimit) {
         isFlagged = true;
-        reason = `Excessive speed: ${speed.toFixed(1)} km/h`;
+        reason = `Excessive speed: ${speedKmH} km/h`;
       } else if (point.accuracyMeters > 100) {
         isFlagged = true;
         reason = `Low GPS accuracy: ${point.accuracyMeters}m`;
       }
 
+      const override = overrides.get(point.id);
+      if (override) {
+        return {
+          ...point,
+          speedKmH,
+          isFlagged: override.isFlagged,
+          flagReason: override.isFlagged ? point.flagReason || 'Manually flagged' : '',
+          manuallyOverridden: override.manuallyOverridden,
+        };
+      }
+
       return {
         ...point,
-        speedKmH: Number(speed.toFixed(1)),
+        speedKmH,
         isFlagged,
         flagReason: reason,
         manuallyOverridden: false,
