@@ -1,3 +1,5 @@
+@use '../../../styles' as *;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -5,6 +7,7 @@
   padding: var(--fluid-px);
   gap: 2rem;
 }
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -22,6 +25,90 @@
     gap: 0.5rem;
   }
 }
+
+.instructions-panel {
+  background-color: var(--bg-surface, #1e293b);
+  border: 1px solid var(--border-color, #334155);
+  border-left: 4px solid var(--accent-primary, #3b82f6);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.925rem;
+  line-height: 1.5;
+  color: var(--text-main, #f8fafc);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+  strong {
+    color: var(--text-emphasis, #ffffff);
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  span {
+    margin-left: 2rem;
+  }
+
+  @include mobile {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    margin: 0.75rem 1rem;
+  }
+}
+
+.restoration-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-success);
+  padding: 0.75rem 1.25rem;
+  margin: 0.75rem auto;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .banner-actions {
+    display: flex;
+    margin-left: 1.3rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .btn-sm {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .btn-text {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    transition:
+      color 0.2s,
+      background 0.2s;
+
+    &:hover {
+      color: var(--accent-danger);
+      background-color: rgba(244, 63, 94, 0.1);
+    }
+  }
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
