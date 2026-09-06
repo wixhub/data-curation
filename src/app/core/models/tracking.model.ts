@@ -20,3 +20,11 @@ export interface FilterCriteria {
   showOnlyFlagged: boolean;
   maxSpeedThreshold: number; // km/h
 }
+
+export interface CurationSession {
+  id?: number;
+  timestamp: number;
+  uploadedTracks: TrackingPoint[];
+  manualOverrides: Array<[string, { isFlagged: boolean; manuallyOverridden: boolean }]>;
+  filters: FilterCriteria;
+}
