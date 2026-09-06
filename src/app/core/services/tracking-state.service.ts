@@ -1,16 +1,19 @@
-import { Service, computed, inject, signal } from '@angular/core';
+import { Service, computed, effect, inject, signal } from '@angular/core';
 import { TrackingApiService } from './tracking-api.service';
 import { TrackingParserService } from './tracking-parser.service';
 import { GeospatialQcEngine } from './geospatial-qc-engine';
 import { FilterCriteria, TrackingPoint, ViewMode } from '../models/tracking.model';
+import { DatabaseService } from './database.service';
 
 @Service()
 export class TrackingStateService {
   private readonly apiService = inject(TrackingApiService);
   private readonly parserService = inject(TrackingParserService);
   private readonly qcEngine = inject(GeospatialQcEngine);
+  private readonly dbService = inject(DatabaseService);
 
   readonly viewMode = signal<ViewMode>('split');
+  readonly sessionRestored = signal<boolean>(false);
 
   readonly filters = signal<FilterCriteria>({
     startDate: null,
@@ -26,6 +29,44 @@ export class TrackingStateService {
   private readonly manualOverrides = signal<
     Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>
   >(new Map());
+
+  constructor() {
+    // Automatically trigger session auto-save on state changes
+    effect(() => {
+      const tracks = this.uploadedTracks();
+      const overrides = this.manualOverrides();
+      const currentFilters = this.filters();
+
+      if (tracks && tracks.length > 0) {
+        this.dbService.saveSession(tracks, overrides, currentFilters);
+      }
+    });
+
+    // Optionally attempt session restoration on service initialization
+    this.restoreLatestSession();
+  }
+
+  /**
+   * Restores the latest unfinished curation session from IndexedDB.
+   */
+  async restoreLatestSession(): Promise<boolean> {
+    const session = await this.dbService.getLatestSession();
+    if (session && session.uploadedTracks.length > 0) {
+      this.uploadedTracks.set(session.uploadedTracks);
+      this.manualOverrides.set(new Map(session.manualOverrides));
+      this.filters.set(session.filters);
+      this.sessionRestored.set(true);
+      return true;
+    }
+    return false;
+  }
+
+  async clearCurrentSession(): Promise<void> {
+    await this.dbService.clearSession();
+    this.uploadedTracks.set(null);
+    this.manualOverrides.set(new Map());
+    this.sessionRestored.set(false);
+  }
 
   readonly isLoading = computed(() => this.apiService.tracksResource.isLoading());
 
@@ -60,6 +101,10 @@ export class TrackingStateService {
     const ids = this.rawData().map((p) => p.individualId);
     return ['ALL', ...new Set(ids)];
   });
+
+  dismissRestoration(): void {
+    this.sessionRestored.set(false);
+  }
 
   loadRawFile(file: File): void {
     const reader = new FileReader();
