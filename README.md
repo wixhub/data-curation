@@ -1,22 +1,28 @@
-# Movebank Data Curation & Quality Control Tool
+# FaunaQC Studio — Movebank Data Curation & Quality Control Tool
 
-An interactive, fully responsive web utility built with **Angular 22** designed to help researchers inspect, clean and validate raw animal tracking data prior to analysis or repository publication.
+An interactive, high-performance web application built with Angular 22 (Signals/Effects) designed to help researchers inspect, clean and validate raw animal tracking data prior to analysis or repository publication.
 
 ## Features
 
-- **Adaptive Layout:** Utilizes **SCSS and CSS Grid** to transform complex split-screen data grids into fluid, mobile-friendly interfaces on smartphones and tablets.
+- **Granular Geospatial QC Engine**: Calculates movement metrics independently per animal (GeospatialQcEngine), preventing cross-individual speed calculation errors and flagging physical anomalies or GPS inaccuracies.
 
-- **Automated Outlier Detection:** Client-side algorithms flag suspicious telemetry points (e.g., impossible speed jumps).
+- **Session Auto-Save & Restoration**: Automatically persists curation state, manual overrides, and filter configurations to IndexedDB via Dexie.js, complete with an integrated session restoration workflow.
 
-- **Interactive Review & Export:** Visually inspect anomalies, toggle data inclusion status and export cleaned datasets locally as CSV or JSON.
+- **Deterministic Map Visualization**: Integrates Leaflet.js to render segmented paths with distinct, consistent color-coding per animal subject alongside interactive popup telemetry inspectors.
+
+- **Adaptive UI & Layout**: Utilizes SCSS and CSS Grid to transform split-screen data management tools into fluid, mobile-friendly interfaces across devices.
+
+- **Interactive Review & Export**: Visually inspect anomalies, toggle data inclusion status via manual overrides, and export cleaned datasets locally as CSV or JSON formats.
 
 ## Tech Stack
 
-- **Framework:** This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+- **Framework:** This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3 (Signals, Effects, Functional Inputs/Outputs)
+
+- **Persistence**: Dexie.js (IndexedDB)
 
 - **Styling:** SCSS, CSS Grid (Fully Responsive Across All Screens)
 
-- **Mapping & Logic:** Leaflet.js, custom data-processing pipes
+- **Mapping & Logic:** Leaflet.js with CARTO basemaps integration, custom data-processing pipes
 
 ## Getting Started
 

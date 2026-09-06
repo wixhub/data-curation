@@ -1,0 +1,42 @@
+[
+  {
+    "id": "t1",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T10:00:00Z",
+    "latitude": 47.668,
+    "longitude": 9.175,
+    "accuracyMeters": 5
+  },
+  {
+    "id": "t2",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T10:00:00Z",
+    "latitude": 47.665,
+    "longitude": 9.18,
+    "accuracyMeters": 5
+  },
+  {
+    "id": "t3",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T10:15:00Z",
+    "latitude": 47.675,
+    "longitude": 9.195,
+    "accuracyMeters": 6
+  },
+  {
+    "id": "t4",
+    "individualId": "Bear_Beta",
+    "timestamp": "2026-06-01T10:20:00Z",
+    "latitude": 47.673,
+    "longitude": 9.2,
+    "accuracyMeters": 7
+  },
+  {
+    "id": "t5",
+    "individualId": "Wolf_Alpha",
+    "timestamp": "2026-06-01T10:45:00Z",
+    "latitude": 49.5,
+    "longitude": 11.0,
+    "accuracyMeters": 10
+  }
+]
