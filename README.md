@@ -1,4 +1,4 @@
-# FaunaQC Studio — Movebank Data Curation & Quality Control Tool
+# FaunaQC Studio <br/> Movebank Data Curation & Quality Control Tool
 
 An interactive, high-performance web application built with Angular 22 (Signals/Effects) designed to help researchers inspect, clean and validate raw animal tracking data prior to analysis or repository publication.
 
