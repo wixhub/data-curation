@@ -1,7 +1,7 @@
 import { Service, computed, effect, inject, signal } from '@angular/core';
 import { TrackingApiService } from './tracking-api.service';
 import { TrackingParserService } from './tracking-parser.service';
-import { GeospatialQcEngine } from './geospatial-qc-engine';
+import { GeospatialQcEngine } from './geospatial-qc.engine';
 import { FilterCriteria, TrackingPoint, ViewMode } from '../models/tracking.model';
 import { DatabaseService } from './database.service';
 
@@ -12,8 +12,21 @@ export class TrackingStateService {
   private readonly qcEngine = inject(GeospatialQcEngine);
   private readonly dbService = inject(DatabaseService);
 
+  private readonly uploadedTracks = signal<TrackingPoint[] | null>(null);
+  private readonly manualOverrides = signal<
+    Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>
+  >(new Map());
+
+  private readonly baseRawData = computed(() => {
+    const uploaded = this.uploadedTracks();
+    if (uploaded) return uploaded;
+    return this.apiService.tracksResource.value() ?? [];
+  });
+
   readonly viewMode = signal<ViewMode>('split');
   readonly sessionRestored = signal<boolean>(false);
+  readonly selectedPointId = signal<string | null>(null);
+  readonly isLoading = computed(() => this.apiService.tracksResource.isLoading());
 
   readonly filters = signal<FilterCriteria>({
     startDate: null,
@@ -23,12 +36,31 @@ export class TrackingStateService {
     maxSpeedThreshold: 50,
   });
 
-  readonly selectedPointId = signal<string | null>(null);
+  readonly rawData = computed(() => {
+    const points = this.baseRawData();
+    if (!points.length) return [];
+    return this.qcEngine.runQC(points, this.filters().maxSpeedThreshold, this.manualOverrides());
+  });
 
-  private readonly uploadedTracks = signal<TrackingPoint[] | null>(null);
-  private readonly manualOverrides = signal<
-    Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>
-  >(new Map());
+  readonly availableIndividuals = computed(() => {
+    const ids = this.rawData().map((p) => p.individualId);
+    return ['ALL', ...new Set(ids)];
+  });
+
+  readonly filteredData = computed(() => {
+    const points = this.rawData();
+    const criteria = this.filters();
+
+    return points.filter((p) => {
+      if (criteria.selectedIndividual !== 'ALL' && p.individualId !== criteria.selectedIndividual) {
+        return false;
+      }
+      if (criteria.showOnlyFlagged && !p.isFlagged) {
+        return false;
+      }
+      return true;
+    });
+  });
 
   constructor() {
     // Automatically trigger session auto-save on state changes
@@ -67,40 +99,6 @@ export class TrackingStateService {
     this.manualOverrides.set(new Map());
     this.sessionRestored.set(false);
   }
-
-  readonly isLoading = computed(() => this.apiService.tracksResource.isLoading());
-
-  private readonly baseRawData = computed(() => {
-    const uploaded = this.uploadedTracks();
-    if (uploaded) return uploaded;
-    return this.apiService.tracksResource.value() ?? [];
-  });
-
-  readonly rawData = computed(() => {
-    const points = this.baseRawData();
-    if (!points.length) return [];
-    return this.qcEngine.runQC(points, this.filters().maxSpeedThreshold, this.manualOverrides());
-  });
-
-  readonly filteredData = computed(() => {
-    const points = this.rawData();
-    const criteria = this.filters();
-
-    return points.filter((p) => {
-      if (criteria.selectedIndividual !== 'ALL' && p.individualId !== criteria.selectedIndividual) {
-        return false;
-      }
-      if (criteria.showOnlyFlagged && !p.isFlagged) {
-        return false;
-      }
-      return true;
-    });
-  });
-
-  readonly availableIndividuals = computed(() => {
-    const ids = this.rawData().map((p) => p.individualId);
-    return ['ALL', ...new Set(ids)];
-  });
 
   dismissRestoration(): void {
     this.sessionRestored.set(false);

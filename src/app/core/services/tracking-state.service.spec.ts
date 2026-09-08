@@ -1,10 +1,8 @@
-/// <reference types="vitest/globals" />
-
 import { TestBed } from '@angular/core/testing';
 import { TrackingStateService } from './tracking-state.service';
 import { TrackingApiService } from './tracking-api.service';
 import { TrackingParserService } from './tracking-parser.service';
-import { GeospatialQcEngine } from './geospatial-qc-engine';
+import { GeospatialQcEngine } from './geospatial-qc.engine';
 import { DatabaseService } from './database.service';
 
 describe('TrackingStateService', () => {

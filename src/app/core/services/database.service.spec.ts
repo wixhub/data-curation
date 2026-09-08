@@ -1,5 +1,3 @@
-/// <reference types="vitest/globals" />
-
 import Dexie from 'dexie';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { DatabaseService } from './database.service';

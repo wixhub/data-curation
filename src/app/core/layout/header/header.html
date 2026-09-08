@@ -1,0 +1,34 @@
+<header class="dashboard-header">
+  <div class="brand">
+    <h1>FaunaQC Studio</h1>
+    <span class="subtitle">Animal Tracking Curation Engine</span>
+  </div>
+  <!-- User guidance instructions panel -->
+  <div class="instructions-panel">
+    <p>
+      <strong>User Guide:</strong><br />
+      <span
+        >1. Upload a raw telemetry dataset using <strong>Upload Raw Data</strong> or inspect the
+        preloaded mock records.</span
+      ><br />
+      <span
+        >2. Adjust the <strong>Speed Limit</strong> to automatically flag physical anomalies, review
+        points in the table or spatial inspector.</span
+      ><br />
+      <span>3. You can export your cleaned dataset for repository publication.</span>
+    </p>
+  </div>
+  <div class="actions">
+    <!-- File upload trigger -->
+    <input
+      type="file"
+      #fileInput
+      style="display: none"
+      accept=".csv,.json"
+      (change)="onFileSelected($event)"
+    />
+    <button class="btn-primary" (click)="fileInput.click()">Upload Raw Data</button>
+    <button class="btn-secondary" (click)="stateService.exportData('csv')">Export CSV</button>
+    <button class="btn-secondary" (click)="stateService.exportData('json')">Export JSON</button>
+  </div>
+</header>
