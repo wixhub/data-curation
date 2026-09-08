@@ -24,6 +24,15 @@ An interactive, high-performance web application built with Angular 22 (Signals/
 
 - **Mapping & Logic:** Leaflet.js with CARTO basemaps integration, custom data-processing pipes
 
+![FaunaQC Studio UI](main_page.png)
+
+### User Guide:
+
+1. Upload a raw telemetry dataset using **Upload Raw Data** or inspect the preloaded mock records.
+2. Adjust the **Speed Limit** to automatically flag physical anomalies, review points in the table or spatial inspector.
+3. Your session is **auto-saved**, allowing you to seamlessly continue editing after a reload.
+4. Export your cleaned dataset for repository publication.
+
 ## Getting Started
 
 ```bash

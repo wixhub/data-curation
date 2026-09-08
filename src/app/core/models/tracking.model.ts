@@ -3,7 +3,7 @@ export type ViewMode = 'split' | 'table-only' | 'map-only';
 export interface TrackingPoint {
   id: string;
   individualId: string;
-  timestamp: string; // ISO string
+  timestamp: string;
   latitude: number;
   longitude: number;
   speedKmH?: number;
@@ -18,13 +18,23 @@ export interface FilterCriteria {
   endDate: string | null;
   selectedIndividual: string;
   showOnlyFlagged: boolean;
-  maxSpeedThreshold: number; // km/h
+  maxSpeedThreshold: number;
+}
+
+export interface ManualOverride {
+  isFlagged: boolean;
+  manuallyOverridden: boolean;
 }
 
 export interface CurationSession {
   id?: number;
   timestamp: number;
   uploadedTracks: TrackingPoint[];
-  manualOverrides: Array<[string, { isFlagged: boolean; manuallyOverridden: boolean }]>;
+  manualOverrides: Array<[string, ManualOverride]>;
   filters: FilterCriteria;
+}
+
+export interface GeospatialQcOptions {
+  maxSpeedThreshold: number;
+  manualOverrides: Map<string, ManualOverride>;
 }

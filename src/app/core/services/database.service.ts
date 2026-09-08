@@ -1,6 +1,11 @@
 import { Service } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { CurationSession, FilterCriteria, TrackingPoint } from '../models/tracking.model';
+import {
+  CurationSession,
+  FilterCriteria,
+  ManualOverride,
+  TrackingPoint,
+} from '../models/tracking.model';
 
 @Service()
 export class DatabaseService extends Dexie {
@@ -22,16 +27,19 @@ export class DatabaseService extends Dexie {
    */
   async saveSession(
     tracks: TrackingPoint[],
-    overrides: Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>,
+    overrides: Map<string, ManualOverride>,
     filters: FilterCriteria,
   ): Promise<void> {
     const serializedOverrides: CurationSession['manualOverrides'] = Array.from(overrides.entries());
-    await this.sessions.clear();
-    await this.sessions.add({
-      timestamp: Date.now(),
-      uploadedTracks: tracks,
-      manualOverrides: serializedOverrides,
-      filters,
+
+    await this.transaction('rw', this.sessions, async () => {
+      await this.sessions.clear();
+      await this.sessions.add({
+        timestamp: Date.now(),
+        uploadedTracks: [...tracks],
+        manualOverrides: serializedOverrides,
+        filters: { ...filters },
+      });
     });
   }
 
@@ -40,18 +48,15 @@ export class DatabaseService extends Dexie {
    */
   async getLatestSession(): Promise<CurationSession | null> {
     const latest = await this.sessions.orderBy('timestamp').last();
-    if (!latest) return null;
-
-    return {
-      ...latest,
-      manualOverrides: latest.manualOverrides as any, // ready for Map instantiation if needed
-    };
+    return latest ?? null;
   }
 
   /**
    * Clears all saved sessions from the local database.
    */
   async clearSession(): Promise<void> {
-    await this.sessions.clear();
+    await this.transaction('rw', this.sessions, async () => {
+      await this.sessions.clear();
+    });
   }
 }

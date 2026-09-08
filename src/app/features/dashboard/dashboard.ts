@@ -1,10 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TrackingStateService } from '../../core/services/tracking-state.service';
-import { ViewMode } from '../../core/models/tracking.model';
 import { DataGrid } from '../data-grid/data-grid';
 import { MapInspector } from '../map-inspector/map-inspector';
 import { Footer } from '../../core/layout/footer/footer';
-import { Header } from "../../core/layout/header/header";
+import { Header } from '../../core/layout/header/header';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,9 +14,6 @@ import { Header } from "../../core/layout/header/header";
 export class Dashboard {
   // Inject tracking state service for centralized data management
   readonly stateService = inject(TrackingStateService);
-
-  // Current active layout view mode signal ('split', 'table-only', 'map-only')
-  readonly viewMode = signal<ViewMode>('split');
 
   // Handle individual filter change from native select element event
   onIndividualChange(event: Event): void {

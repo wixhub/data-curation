@@ -32,7 +32,7 @@
       Show Flagged Only
     </label>
   </div>
-  <!-- Session restoration notification banner -->
+
   @if (stateService.sessionRestored()) {
     <div class="restoration-banner">
       <span>Unfinished curation session restored from local storage</span>
@@ -44,19 +44,31 @@
       </div>
     </div>
   }
+
   <div class="view-toggles">
-    <button [class.active]="viewMode() === 'split'" (click)="viewMode.set('split')">Split</button>
-    <button [class.active]="viewMode() === 'table-only'" (click)="viewMode.set('table-only')">
+    <button
+      [class.active]="stateService.viewMode() === 'split'"
+      (click)="stateService.setViewMode('split')"
+    >
+      Split
+    </button>
+    <button
+      [class.active]="stateService.viewMode() === 'table-only'"
+      (click)="stateService.setViewMode('table-only')"
+    >
       Table
     </button>
-    <button [class.active]="viewMode() === 'map-only'" (click)="viewMode.set('map-only')">
+    <button
+      [class.active]="stateService.viewMode() === 'map-only'"
+      (click)="stateService.setViewMode('map-only')"
+    >
       Map
     </button>
   </div>
 </section>
 
-<main class="dashboard-content [viewMode()]">
-  @if (viewMode() === 'split' || viewMode() === 'table-only') {
+<main class="dashboard-content [stateService.viewMode()]">
+  @if (stateService.viewMode() === 'split' || stateService.viewMode() === 'table-only') {
     <div class="pane">
       <app-data-grid
         [data]="stateService.filteredData()"
@@ -68,7 +80,7 @@
     </div>
   }
 
-  @if (viewMode() === 'split' || viewMode() === 'map-only') {
+  @if (stateService.viewMode() === 'split' || stateService.viewMode() === 'map-only') {
     <div class="pane">
       <app-map-inspector
         [data]="stateService.filteredData()"

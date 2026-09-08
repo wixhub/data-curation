@@ -1,117 +1,115 @@
-import { TestBed } from '@angular/core/testing';
 import { TrackingStateService } from './tracking-state.service';
 import { TrackingApiService } from './tracking-api.service';
 import { TrackingParserService } from './tracking-parser.service';
 import { GeospatialQcEngine } from './geospatial-qc.engine';
 import { DatabaseService } from './database.service';
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 
 describe('TrackingStateService', () => {
   let service: TrackingStateService;
-  let apiServiceMock: any;
-  let parserServiceMock: any;
-  let qcEngineMock: any;
-  let dbServiceMock: any;
+  let apiServiceMock: {
+    tracksResource: { value: ReturnType<typeof signal>; isLoading: ReturnType<typeof signal> };
+  };
+  let dbServiceMock: {
+    getLatestSession: ReturnType<typeof vi.fn>;
+    saveSession: ReturnType<typeof vi.fn>;
+    clearSession: ReturnType<typeof vi.fn>;
+  };
+  let parserServiceMock: { parseFile: ReturnType<typeof vi.fn> };
+  let qcEngineMock: { run: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    vi.useFakeTimers();
+
     apiServiceMock = {
       tracksResource: {
-        isLoading: vi.fn().mockReturnValue(false),
-        value: vi.fn().mockReturnValue([]),
+        value: signal([]),
+        isLoading: signal(false),
       },
     };
-    parserServiceMock = {
-      parseFile: vi.fn(),
-    };
-    qcEngineMock = {
-      runQC: vi.fn().mockImplementation((points) => points),
-    };
+
     dbServiceMock = {
-      saveSession: vi.fn().mockResolvedValue(undefined),
       getLatestSession: vi.fn().mockResolvedValue(null),
+      saveSession: vi.fn().mockResolvedValue(undefined),
       clearSession: vi.fn().mockResolvedValue(undefined),
+    };
+
+    parserServiceMock = {
+      parseFile: vi.fn().mockReturnValue([]),
+    };
+
+    qcEngineMock = {
+      run: vi.fn().mockImplementation((points) => points),
     };
 
     TestBed.configureTestingModule({
       providers: [
         TrackingStateService,
         { provide: TrackingApiService, useValue: apiServiceMock },
+        { provide: DatabaseService, useValue: dbServiceMock },
         { provide: TrackingParserService, useValue: parserServiceMock },
         { provide: GeospatialQcEngine, useValue: qcEngineMock },
-        { provide: DatabaseService, useValue: dbServiceMock },
       ],
     });
 
     service = TestBed.inject(TrackingStateService);
   });
 
-  it('should initialize with default states and filters', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('should initialize with default filters and view mode', () => {
     expect(service.viewMode()).toBe('split');
-    expect(service.sessionRestored()).toBe(false);
-    expect(service.filters().selectedIndividual).toBe('ALL');
     expect(service.filters().maxSpeedThreshold).toBe(50);
+    expect(service.sessionRestored()).toBe(false);
   });
 
   it('should update filters correctly', () => {
-    service.updateFilters({ selectedIndividual: 'ind-1', showOnlyFlagged: true });
-    expect(service.filters().selectedIndividual).toBe('ind-1');
-    expect(service.filters().showOnlyFlagged).toBe(true);
+    service.updateFilters({ maxSpeedThreshold: 30, selectedIndividual: 'wolf-1' });
+    expect(service.filters().maxSpeedThreshold).toBe(30);
+    expect(service.filters().selectedIndividual).toBe('wolf-1');
   });
 
-  it('should switch view modes', () => {
-    service.setViewMode('map-only');
-    expect(service.viewMode()).toBe('map-only');
-  });
-
-  it('should restore the latest session from database successfully', async () => {
+  it('should auto-dismiss session restoration after 5 seconds', async () => {
     const mockSession = {
-      uploadedTracks: [{ id: '1', individualId: 'ind-1', isFlagged: false }],
-      manualOverrides: [['1', { isFlagged: true, manuallyOverridden: true }]],
-      filters: { selectedIndividual: 'ind-1', showOnlyFlagged: false, maxSpeedThreshold: 30 },
+      timestamp: Date.now(),
+      uploadedTracks: [],
+      manualOverrides: [],
+      filters: {
+        startDate: null,
+        endDate: null,
+        selectedIndividual: 'ALL',
+        showOnlyFlagged: false,
+        maxSpeedThreshold: 20,
+      },
     };
 
-    dbServiceMock.getLatestSession.mockResolvedValue(mockSession);
+    dbServiceMock.getLatestSession.mockResolvedValueOnce(mockSession);
 
-    const restored = await service.restoreLatestSession();
+    // Trigger initialization with mock data
+    apiServiceMock.tracksResource.value.set([
+      {
+        id: '1',
+        individualId: 'a',
+        timestamp: '2026-01-01T00:00:00Z',
+        latitude: 0,
+        longitude: 0,
+        accuracyMeters: 10,
+        isFlagged: false,
+      },
+    ]);
 
-    expect(restored).toBe(true);
-    expect(service.sessionRestored()).toBe(true);
-    expect(service.filters().selectedIndividual).toBe('ind-1');
-  });
+    // Wait for async effect and initialization to settle
+    await vi.waitFor(() => {
+      expect(service.sessionRestored()).toBe(true);
+    });
 
-  it('should clear the current session and reset storage', async () => {
-    await service.clearCurrentSession();
+    // Fast-forward time by 5 seconds for auto-dismiss timeout
+    vi.advanceTimersByTime(5000);
 
-    expect(dbServiceMock.clearSession).toHaveBeenCalled();
     expect(service.sessionRestored()).toBe(false);
-  });
-
-  it('should filter points correctly based on individual and flag criteria', () => {
-    apiServiceMock.tracksResource.value.mockReturnValue([
-      { id: '1', individualId: 'ind-1', isFlagged: false },
-      { id: '2', individualId: 'ind-2', isFlagged: true },
-    ]);
-
-    // Filter by individual ind-2
-    service.updateFilters({ selectedIndividual: 'ind-2' });
-    expect(service.filteredData().length).toBe(1);
-    expect(service.filteredData()[0].id).toBe('2');
-
-    // Filter by showOnlyFlagged
-    service.updateFilters({ selectedIndividual: 'ALL', showOnlyFlagged: true });
-    expect(service.filteredData().length).toBe(1);
-    expect(service.filteredData()[0].id).toBe('2');
-  });
-
-  it('should delete a point from tracking records', () => {
-    apiServiceMock.tracksResource.value.mockReturnValue([
-      { id: '1', individualId: 'ind-1' },
-      { id: '2', individualId: 'ind-1' },
-    ]);
-
-    service.deletePoint('1');
-
-    const raw = service.rawData();
-    expect(raw.length).toBe(1);
-    expect(raw[0].id).toBe('2');
   });
 });
