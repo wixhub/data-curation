@@ -1,51 +1,4 @@
-<header class="dashboard-header">
-  <div class="brand">
-    <h1>FaunaQC Studio</h1>
-    <span class="subtitle">Animal Tracking Curation Engine</span>
-  </div>
-  <div class="actions">
-    <!-- File upload trigger -->
-    <input
-      type="file"
-      #fileInput
-      style="display: none"
-      accept=".csv,.json"
-      (change)="onFileSelected($event)"
-    />
-    <button class="btn-primary" (click)="fileInput.click()">Upload Raw Data</button>
-    <button class="btn-secondary" (click)="stateService.exportData('csv')">Export CSV</button>
-    <button class="btn-secondary" (click)="stateService.exportData('json')">Export JSON</button>
-  </div>
-</header>
-
-<!-- User guidance instructions panel -->
-<section class="instructions-panel">
-  <p>
-    <strong>User Guide:</strong><br />
-    <span
-      >1. Upload a raw telemetry dataset using <strong>Upload Raw Data</strong> or inspect the
-      preloaded mock records.</span
-    ><br />
-    <span
-      >2. Adjust the <strong>Speed Limit</strong> to automatically flag physical anomalies, review
-      points in the table or spatial inspector.</span
-    ><br />
-    <span>3. You can export your cleaned dataset for repository publication.</span>
-  </p>
-</section>
-
-<!-- Session restoration notification banner -->
-@if (stateService.sessionRestored()) {
-  <div class="restoration-banner">
-    <span>Unfinished curation session restored from local storage</span>
-    <div class="banner-actions">
-      <button class="btn-primary btn-sm" (click)="stateService.dismissRestoration()">OK</button>
-      <button class="btn-text" (click)="stateService.clearCurrentSession()">
-        Discard & Start Fresh
-      </button>
-    </div>
-  </div>
-}
+<app-header />
 
 <section class="toolbar">
   <div class="filter-group">
@@ -79,7 +32,18 @@
       Show Flagged Only
     </label>
   </div>
-
+  <!-- Session restoration notification banner -->
+  @if (stateService.sessionRestored()) {
+    <div class="restoration-banner">
+      <span>Unfinished curation session restored from local storage</span>
+      <div class="banner-actions">
+        <button class="btn-primary btn-sm" (click)="stateService.dismissRestoration()">OK</button>
+        <button class="btn-text" (click)="stateService.clearCurrentSession()">
+          Discard & Start Fresh
+        </button>
+      </div>
+    </div>
+  }
   <div class="view-toggles">
     <button [class.active]="viewMode() === 'split'" (click)="viewMode.set('split')">Split</button>
     <button [class.active]="viewMode() === 'table-only'" (click)="viewMode.set('table-only')">
@@ -114,4 +78,5 @@
     </div>
   }
 </main>
+
 <app-footer />

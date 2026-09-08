@@ -1,5 +1,3 @@
-/// <reference types="vitest/globals" />
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { Dashboard } from './dashboard';
@@ -80,22 +78,5 @@ describe('Dashboard', () => {
     expect(stateServiceMock.updateFilters).toHaveBeenCalledWith({
       showOnlyFlagged: true,
     });
-  });
-
-  it('should handle file selection and invoke loadRawFile', () => {
-    const file = new File(['dummy content'], 'tracks.csv', { type: 'text/csv' });
-    const inputElement = document.createElement('input');
-    inputElement.type = 'file';
-
-    Object.defineProperty(inputElement, 'files', {
-      value: [file],
-      writable: false,
-    });
-
-    const event = { target: inputElement } as unknown as Event;
-
-    component.onFileSelected(event);
-
-    expect(stateServiceMock.loadRawFile).toHaveBeenCalledWith(file);
   });
 });
