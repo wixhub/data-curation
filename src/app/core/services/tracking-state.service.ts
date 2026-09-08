@@ -2,8 +2,9 @@ import { Service, computed, effect, inject, signal } from '@angular/core';
 import { TrackingApiService } from './tracking-api.service';
 import { TrackingParserService } from './tracking-parser.service';
 import { GeospatialQcEngine } from './geospatial-qc.engine';
-import { FilterCriteria, TrackingPoint, ViewMode } from '../models/tracking.model';
 import { DatabaseService } from './database.service';
+import { exportTrackingData } from '../utils/export.utils';
+import { FilterCriteria, ManualOverride, TrackingPoint, ViewMode } from '../models/tracking.model';
 
 @Service()
 export class TrackingStateService {
@@ -11,51 +12,68 @@ export class TrackingStateService {
   private readonly parserService = inject(TrackingParserService);
   private readonly qcEngine = inject(GeospatialQcEngine);
   private readonly dbService = inject(DatabaseService);
+  private initializationCompleted = false;
+  private restorationTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  private readonly uploadedTracks = signal<TrackingPoint[] | null>(null);
-  private readonly manualOverrides = signal<
-    Map<string, { isFlagged: boolean; manuallyOverridden: boolean }>
-  >(new Map());
-
-  private readonly baseRawData = computed(() => {
-    const uploaded = this.uploadedTracks();
-    if (uploaded) return uploaded;
-    return this.apiService.tracksResource.value() ?? [];
-  });
-
+  readonly uploadedTracks = signal<TrackingPoint[] | null>(null);
+  readonly manualOverrides = signal<Map<string, ManualOverride>>(new Map());
   readonly viewMode = signal<ViewMode>('split');
   readonly sessionRestored = signal<boolean>(false);
   readonly selectedPointId = signal<string | null>(null);
-  readonly isLoading = computed(() => this.apiService.tracksResource.isLoading());
 
-  readonly filters = signal<FilterCriteria>({
+  readonly defaultFilters: FilterCriteria = {
     startDate: null,
     endDate: null,
     selectedIndividual: 'ALL',
     showOnlyFlagged: false,
     maxSpeedThreshold: 50,
+  };
+
+  readonly filters = signal<FilterCriteria>({ ...this.defaultFilters });
+  readonly isLoading = computed(() => this.apiService.tracksResource.isLoading());
+
+  readonly baseRawData = computed(() => {
+    const uploaded = this.uploadedTracks();
+    if (uploaded !== null) {
+      return uploaded;
+    }
+    return this.apiService.tracksResource.value() ?? [];
   });
 
   readonly rawData = computed(() => {
-    const points = this.baseRawData();
-    if (!points.length) return [];
-    return this.qcEngine.runQC(points, this.filters().maxSpeedThreshold, this.manualOverrides());
+    return this.qcEngine.run(this.baseRawData(), {
+      maxSpeedThreshold: this.filters().maxSpeedThreshold,
+      manualOverrides: this.manualOverrides(),
+    });
   });
 
   readonly availableIndividuals = computed(() => {
-    const ids = this.rawData().map((p) => p.individualId);
-    return ['ALL', ...new Set(ids)];
+    const ids = new Set(
+      this.rawData()
+        .map((point) => point.individualId)
+        .filter(Boolean),
+    );
+    return ['ALL', ...Array.from(ids).sort()];
   });
 
   readonly filteredData = computed(() => {
-    const points = this.rawData();
-    const criteria = this.filters();
+    const data = this.rawData();
+    const currentFilters = this.filters();
 
-    return points.filter((p) => {
-      if (criteria.selectedIndividual !== 'ALL' && p.individualId !== criteria.selectedIndividual) {
+    return data.filter((point) => {
+      if (
+        currentFilters.selectedIndividual !== 'ALL' &&
+        point.individualId !== currentFilters.selectedIndividual
+      ) {
         return false;
       }
-      if (criteria.showOnlyFlagged && !p.isFlagged) {
+      if (currentFilters.showOnlyFlagged && !point.isFlagged) {
+        return false;
+      }
+      if (currentFilters.startDate && point.timestamp < currentFilters.startDate) {
+        return false;
+      }
+      if (currentFilters.endDate && point.timestamp > currentFilters.endDate) {
         return false;
       }
       return true;
@@ -69,59 +87,111 @@ export class TrackingStateService {
       const overrides = this.manualOverrides();
       const currentFilters = this.filters();
 
-      if (tracks && tracks.length > 0) {
-        this.dbService.saveSession(tracks, overrides, currentFilters);
+      if (!this.initializationCompleted || tracks === null) {
+        return;
       }
+
+      void this.dbService.saveSession(tracks, overrides, currentFilters);
     });
 
-    // Optionally attempt session restoration on service initialization
-    this.restoreLatestSession();
+    effect(() => {
+      const apiTracks = this.apiService.tracksResource.value();
+      if (!apiTracks || this.initializationCompleted) {
+        return;
+      }
+
+      void this.initializeSession(apiTracks);
+    });
   }
 
-  /**
-   * Restores the latest unfinished curation session from IndexedDB.
-   */
-  async restoreLatestSession(): Promise<boolean> {
-    const session = await this.dbService.getLatestSession();
-    if (session && session.uploadedTracks.length > 0) {
-      this.uploadedTracks.set(session.uploadedTracks);
-      this.manualOverrides.set(new Map(session.manualOverrides));
-      this.filters.set(session.filters);
-      this.sessionRestored.set(true);
-      return true;
+  private async initializeSession(apiTracks: TrackingPoint[]): Promise<void> {
+    this.initializationCompleted = true;
+
+    try {
+      const session = await this.dbService.getLatestSession();
+
+      if (session) {
+        this.uploadedTracks.set([...session.uploadedTracks]);
+        this.manualOverrides.set(new Map(session.manualOverrides));
+
+        this.filters.set({
+          ...this.defaultFilters,
+          ...(session.filters ?? {}),
+        });
+
+        this.sessionRestored.set(true);
+        this.triggerAutoDismiss();
+        return;
+      }
+
+      this.uploadedTracks.set([...apiTracks]);
+      await this.dbService.saveSession(apiTracks, new Map(), this.filters());
+    } catch (error) {
+      console.error('Failed to initialize session from IndexedDB.', error);
+      this.uploadedTracks.set([...apiTracks]);
     }
-    return false;
   }
 
-  async clearCurrentSession(): Promise<void> {
-    await this.dbService.clearSession();
-    this.uploadedTracks.set(null);
-    this.manualOverrides.set(new Map());
-    this.sessionRestored.set(false);
+  async restoreLatestSession(): Promise<void> {
+    try {
+      const session = await this.dbService.getLatestSession();
+      if (!session) return;
+
+      this.uploadedTracks.set([...session.uploadedTracks]);
+      this.manualOverrides.set(new Map(session.manualOverrides));
+
+      this.filters.set({
+        ...this.defaultFilters,
+        ...(session.filters ?? {}),
+      });
+
+      this.selectedPointId.set(null);
+      this.sessionRestored.set(true);
+      this.triggerAutoDismiss();
+      this.initializationCompleted = true;
+    } catch (error) {
+      console.error('Failed to restore tracking session.', error);
+    }
   }
 
   dismissRestoration(): void {
+    if (this.restorationTimeout) {
+      clearTimeout(this.restorationTimeout);
+      this.restorationTimeout = null;
+    }
     this.sessionRestored.set(false);
+  }
+
+  private triggerAutoDismiss(): void {
+    if (this.restorationTimeout) {
+      clearTimeout(this.restorationTimeout);
+    }
+    this.restorationTimeout = setTimeout(() => {
+      this.dismissRestoration();
+    }, 5000);
   }
 
   loadRawFile(file: File): void {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      if (!content) return;
+    reader.onload = () => {
       try {
+        const content = reader.result;
+        if (typeof content !== 'string') return;
+
         const parsed = this.parserService.parseFile(content, file.name);
-        this.uploadedTracks.set(parsed);
-        this.manualOverrides.set(new Map());
-      } catch (err) {
-        console.error('Failed to parse uploaded file', err);
+        if (!parsed || parsed.length === 0) return;
+
+        this.resetDatasetState();
+        this.uploadedTracks.set([...parsed]);
+      } catch (error) {
+        console.error('Failed to parse uploaded tracking file.', error);
       }
     };
     reader.readAsText(file);
   }
 
-  updateFilters(newFilters: Partial<FilterCriteria>): void {
-    this.filters.update((curr) => ({ ...curr, ...newFilters }));
+  updateFilters(changes: Partial<FilterCriteria>): void {
+    this.filters.update((current) => ({ ...current, ...changes }));
   }
 
   setViewMode(mode: ViewMode): void {
@@ -129,25 +199,32 @@ export class TrackingStateService {
   }
 
   toggleOverride(pointId: string): void {
-    this.manualOverrides.update((map) => {
-      const newMap = new Map(map);
-      const targetPoint = this.rawData().find((p) => p.id === pointId);
-      if (targetPoint) {
-        const currentFlagged = newMap.get(pointId)?.isFlagged ?? targetPoint.isFlagged;
-        newMap.set(pointId, { isFlagged: !currentFlagged, manuallyOverridden: true });
-      }
-      return newMap;
+    const point = this.rawData().find((item) => item.id === pointId);
+    if (!point) return;
+
+    this.manualOverrides.update((current) => {
+      const next = new Map(current);
+      next.set(pointId, {
+        isFlagged: !point.isFlagged,
+        manuallyOverridden: true,
+      });
+      return next;
     });
   }
 
-  selectPoint(id: string | null): void {
-    this.selectedPointId.set(id);
+  selectPoint(pointId: string | null): void {
+    this.selectedPointId.set(pointId);
   }
 
   deletePoint(pointId: string): void {
-    this.uploadedTracks.update((current) => {
-      const base = current ?? this.apiService.tracksResource.value() ?? [];
-      return base.filter((p) => p.id !== pointId);
+    const currentTracks = this.uploadedTracks();
+    if (currentTracks === null) return;
+
+    this.uploadedTracks.set(currentTracks.filter((point) => point.id !== pointId));
+    this.manualOverrides.update((current) => {
+      const next = new Map(current);
+      next.delete(pointId);
+      return next;
     });
 
     if (this.selectedPointId() === pointId) {
@@ -155,42 +232,29 @@ export class TrackingStateService {
     }
   }
 
-  exportData(format: 'csv' | 'json'): void {
-    const data = this.filteredData();
-    let content = format === 'json' ? JSON.stringify(data, null, 2) : '';
-    const filename = `curated_tracks_${Date.now()}.${format}`;
-    const mimeType = format === 'json' ? 'application/json' : 'text/csv';
+  private resetDatasetState(): void {
+    this.manualOverrides.set(new Map());
+    this.filters.set({ ...this.defaultFilters });
+    this.selectedPointId.set(null);
+    this.sessionRestored.set(false);
+  }
 
-    if (format === 'csv') {
-      const headers = [
-        'ID',
-        'Individual',
-        'Timestamp',
-        'Latitude',
-        'Longitude',
-        'Speed',
-        'Accuracy',
-        'Flagged',
-      ];
-      const rows = data.map((p) => [
-        p.id,
-        p.individualId,
-        p.timestamp,
-        p.latitude,
-        p.longitude,
-        p.speedKmH ?? 0,
-        p.accuracyMeters,
-        p.isFlagged,
-      ]);
-      content = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  async clearCurrentSession(): Promise<void> {
+    try {
+      await this.dbService.clearSession();
+    } catch (error) {
+      console.error('Failed to clear session from IndexedDB.', error);
     }
 
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.uploadedTracks.set(null);
+    this.resetDatasetState();
+    this.initializationCompleted = false;
+  }
+
+  /**
+   * Triggers file export of the currently filtered dataset.
+   */
+  exportData(format: 'csv' | 'json'): void {
+    exportTrackingData(this.filteredData(), format);
   }
 }
