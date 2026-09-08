@@ -1,6 +1,4 @@
-/// <reference types="vitest/globals" />
-
-import { GeospatialQcEngine } from './geospatial-qc-engine';
+import { GeospatialQcEngine } from './geospatial-qc.engine';
 import { TrackingPoint } from '../models/tracking.model';
 
 describe('GeospatialQcEngine', () => {

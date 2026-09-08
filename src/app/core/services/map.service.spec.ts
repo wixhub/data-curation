@@ -1,5 +1,3 @@
-/// <reference types="vitest/globals" />
-
 import { TestBed } from '@angular/core/testing';
 import { LeafletMapService } from './map.service';
 import { TrackingPoint } from '../models/tracking.model';
