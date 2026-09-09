@@ -1,0 +1,57 @@
+%%{init: {'theme': 'dark'}}%%
+flowchart LR
+    U["User / Browser"] --> A["Angular App Root\n[src/app/app.ts]"]
+    A --> R["Router\n[src/app/app.routes.ts]"]
+    R --> D["Dashboard\n[src/app/features/dashboard/dashboard.ts]"]
+
+    subgraph UI["Dashboard UI"]
+        H["Header\n[src/app/core/layout/header/header.ts]"]
+        G["Data Grid\n[src/app/features/data-grid/data-grid.ts]"]
+        M["Map Inspector\n[src/app/features/map-inspector/map-inspector.ts]"]
+        F["Footer\n[src/app/core/layout/footer/footer.ts]"]
+    end
+
+    D --> H
+    D --> G
+    D --> M
+    D --> F
+    U --> G
+    U --> M
+
+    subgraph Core["Core Application Services"]
+        S["TrackingStateService\n[src/app/core/services/tracking-state.service.ts]"]
+        AApi["TrackingApiService\n[src/app/core/services/tracking-api.service.ts]"]
+        P["TrackingParserService\n[src/app/core/services/tracking-parser.service.ts]"]
+        QC["GeospatialQcEngine\n[src/app/core/services/geospatial-qc.engine.ts]"]
+        DB["DatabaseService\n[src/app/core/services/database.service.ts]"]
+        LS["LeafletMapService\n[src/app/core/services/map.service.ts]"]
+        E["Export Utils\n[src/app/core/utils/export.utils.ts]"]
+    end
+
+    D --> S
+    S --> AApi
+    S --> P
+    S --> QC
+    S --> DB
+    S --> E
+
+    M --> LS
+    LS --> CARTO["CARTO basemap\nenvironment.cartoApiKey"]
+
+    subgraph Data["Data Sources"]
+        JSON["Static dataset\n/public/data/tracks.json"]
+        UP["Uploaded track files\nCSV / JSON"]
+        IDX["IndexedDB session cache\nDexie"]
+    end
+
+    AApi --> JSON
+    P --> UP
+    DB --> IDX
+    JSON --> S
+    UP --> S
+    IDX --> S
+
+    S --> Filtered["Computed filtered dataset\nindividual + speed + flagged filters"]
+    Filtered --> G
+    Filtered --> M
+    M --> MapRender["Leaflet markers + polylines"]

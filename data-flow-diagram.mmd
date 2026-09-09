@@ -1,0 +1,58 @@
+%%{init: {'theme': 'dark'}}%%
+flowchart LR
+    U["User / Browser"] --> A["Angular App Root\napp.ts"]
+    A --> D["Dashboard\nfeatures/dashboard/dashboard.ts"]
+
+    subgraph Input["Input sources"]
+        S1["Static seed data\n/public/data/tracks.json"]
+        S2["Uploaded telemetry\nCSV / JSON file"]
+    end
+
+    subgraph API["Data access layer"]
+        APIService["TrackingApiService\ntracking-api.service.ts"]
+        Parser["TrackingParserService\ntracking-parser.service.ts"]
+    end
+
+    subgraph State["State + QC pipeline"]
+        StateService["TrackingStateService\ntracking-state.service.ts"]
+        Filters["Filter criteria\nselectedIndividual / date / flagged / speed"]
+        Overrides["Manual overrides\nMap<string, ManualOverride>"]
+        QC["GeospatialQcEngine\ngeospatial-qc.engine.ts"]
+        DB["DatabaseService\nIndexedDB via Dexie"]
+    end
+
+    subgraph Presentation["UI / Visualization"]
+        Grid["Data Grid\nfeatures/data-grid/data-grid.ts"]
+        MapUI["Map Inspector\nfeatures/map-inspector/map-inspector.ts"]
+        MapSvc["LeafletMapService\nmap.service.ts"]
+        Export["Export utils\nexport.utils.ts"]
+    end
+
+    S1 --> APIService
+    S2 --> Parser
+    APIService --> StateService
+    Parser --> StateService
+
+    U --> S2
+    U --> Filters
+    U --> Overrides
+
+    Filters --> StateService
+    Overrides --> StateService
+
+    StateService --> QC
+    QC --> StateService
+    StateService --> Grid
+    StateService --> MapUI
+    StateService --> DB
+    DB --> StateService
+
+    MapUI --> MapSvc
+    MapSvc --> MapRender["Map tiles + geospatial render"]
+    StateService --> Export
+    Export --> U
+
+    Grid --> StateService
+    MapUI --> StateService
+    StateService --> Grid
+    StateService --> MapUI
